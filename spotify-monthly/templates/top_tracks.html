@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotlight</title>
+    <!-- Add Google Fonts link -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            position: relative;
+            color: #ffffff; /* Set text color to white */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #000000;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #ffffff; /* Ensure the title is white */
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .view-artists-btn,
+        .create-playlist-btn {
+            padding: 10px 15px;
+            background-color: #1DB954;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .view-artists-btn:hover,
+        .create-playlist-btn:hover {
+            background-color: #1ed760;
+            transform: scale(1.05);
+        }
+
+        .view-artists-btn:active,
+        .create-playlist-btn:active {
+            transform: scale(0.95);
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            color: #ffffff; /* Ensure list text is white */
+        }
+
+        li {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #000000;
+            padding-bottom: 10px;
+        }
+
+        img {
+            margin-right: 20px;
+            border-radius: 4px;
+        }
+
+        .track-info {
+            flex: 1;
+            color: #ffffff; /* Ensure track info text is white */
+        }
+
+        .track-number {
+            font-size: 24px;
+            margin-right: 20px;
+            color: #ffffff; /* Ensure track number is white */
+        }
+
+        audio {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .sign-out-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #000000;
+            color: white;
+            border: 2px solid #1DB954;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s, transform 0.1s, border-color 0.3s;
+            z-index: 1000;
+        }
+
+        .sign-out-btn:hover {
+            background-color: #1DB954;
+            border-color: #1DB954;
+            transform: scale(1.05);
+        }
+
+        .sign-out-btn:active {
+            transform: scale(0.95);
+        }
+
+        #playlist-status {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #000000;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 10px;
+            color: #ffffff; /* Ensure modal text is white */
+        }
+
+        .close, .confirm-logout {
+            color: #1aa34a;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .confirm-logout {
+            color: #1aa34a;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .confirm-logout:hover {
+            color: #1aa34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Top 15 Tracks (past month)</h1>
+            <div class="header-buttons">
+                <button class="create-playlist-btn" onclick="createPlaylist()">Create Playlist</button>
+                <a href="{{ url_for('getArtists') }}" class="view-artists-btn">View Top Artists</a>
+            </div>
+        </div>
+        <button class="sign-out-btn" id="signOutBtn">Sign Out</button>
+        <p id="playlist-status"></p>
+        <ul>
+            {% for song in songs %}
+                <li>
+                    <span class="track-number">{{ loop.index }}.</span>
+                    <img src="{{ song.cover_art }}" alt="Album Cover" width="100">
+                    <div class="track-info">
+                        <h3>{{ song.name }}</h3>
+                        <p>Artist: {{ song.artist }}</p>
+                        <p>Album: {{ song.album_name }}</p>
+                        {% if song.audio_sample_url %}
+                            <audio controls>
+                                <source src="{{ song.audio_sample_url }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- The Modal -->
+    <div id="logoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Confirm Sign Out</p>
+            <button class="confirm-logout" id="confirmLogout">Sign Out</button>
+        </div>
+    </div>
+
+    <script>
+        function createPlaylist() {
+            fetch('/createPlaylist')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('playlist-status').textContent = data;
+                })
+                .catch(error => {
+                    console.error('Error creating playlist:', error);
+                    document.getElementById('playlist-status').textContent = 'Failed to create playlist.';
+                });
+        }
+
+        // Get the modal
+        var modal = document.getElementById("logoutModal");
+
+        // Get the button that opens the modal
+        var btn = document.getElementById("signOutBtn");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // Get the confirm logout button
+        var confirmLogout = document.getElementById("confirmLogout");
+
+        // When the user clicks the button, open the modal
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // When the user clicks the confirm logout button, sign out and redirect
+        confirmLogout.onclick = function() {
+            window.location.href = "{{ url_for('logout') }}";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
